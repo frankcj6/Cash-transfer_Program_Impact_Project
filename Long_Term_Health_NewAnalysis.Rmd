@@ -1,0 +1,117 @@
+---
+title: "Sick and Inactive Days varying by State"
+author: "Drew Chung"
+date: "12/7/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Initial Setup
+I first needed to read in the data using readstata13 and read.dta13. Then I seperated the data into separate subsets catgorized by the states. 
+```{r, warning=FALSE, message=FALSE}
+library(readstata13)
+adult_morbidity <- read.dta13("adults_morbidity_03.dta")
+
+Guerrero <- subset(adult_morbidity, state == "12")
+Hidalgo <- subset(adult_morbidity, state == "13")
+Michoaca <- subset(adult_morbidity, state == "16")
+Puebla <- subset(adult_morbidity, state == "21")
+Queretar <- subset(adult_morbidity, state == "22")
+San_Luis <- subset(adult_morbidity, state == "24")
+Veracruz <- subset(adult_morbidity, state == "30")
+```
+
+## Mexico Map Package
+There is a github package online that is used for Mexico's map. It is very useful for our specific analysis. In order to use this package, we first need to set a few things up:
+```{r, warning=FALSE,message=FALSE}
+if (!require("remotes")) {
+  install.packages("remotes")
+}
+remotes::install_github("diegovalle/mxmaps")
+library("mxmaps")
+if (!require("choroplethr")) {
+  install.packages("choroplethr")
+}
+```
+
+## Average sick and inactive days
+We calculate the overall average amount of sick days and inactive days in our entire dataframe first. This is so we can compare this number to each state later on. 
+
+```{r}
+mean(adult_morbidity$days_sick, na.rm = T)
+mean(adult_morbidity$days_inactivity, na.rm = T)
+```
+
+## Creating our Maps
+This paper only uses data from 7 states. We will show you first the map of the entire country to show you which states are involved in the project and which states are not. Then we will show a second map that features only the maps that are involved in the project so it is easier to see and compare the means. 
+
+## Average Sick Days
+
+```{r}
+df_mxstate$meansickdays <- rep(NA)
+df_mxstate[[12,"meansickdays"]] <- mean(Guerrero$days_sick, na.rm = T)
+df_mxstate[[13,"meansickdays"]] <- mean(Hidalgo$days_sick, na.rm = T)
+df_mxstate[[16,"meansickdays"]] <- mean(Michoaca$days_sick, na.rm = T)
+df_mxstate[[21,"meansickdays"]] <- mean(Puebla$days_sick, na.rm = T)
+df_mxstate[[22,"meansickdays"]] <- mean(Queretar$days_sick, na.rm = T)
+df_mxstate[[24,"meansickdays"]] <- mean(San_Luis$days_sick, na.rm = T)
+df_mxstate[[30,"meansickdays"]] <- mean(Veracruz$days_sick, na.rm = T)
+
+df_mxstate$value <- df_mxstate$meansickdays
+mxstate_choropleth(df_mxstate,
+                   num_colors = 1,
+                   title = "Average Sick Days (Entire Country)")
+df_mxstate$value <- df_mxstate$meansickdays
+mxstate_choropleth(df_mxstate,
+                   zoom = subset(df_mxstate, state_name %in% c("Guerrero", "Hidalgo", "Michoacán", "Puebla", "Querétaro", "San Luis Potosí", "Veracruz"))$region,
+                   num_colors = 7,
+                   title = "Average Sick Days (Only the States in the Project)")
+```
+
+## Average Inactive Days
+```{r}
+df_mxstate$meaninactivedays <- rep(NA)
+df_mxstate[[12,"meaninactivedays"]] <- mean(Guerrero$days_inactivity, na.rm = T)
+df_mxstate[[13,"meaninactivedays"]] <- mean(Hidalgo$days_inactivity, na.rm = T)
+df_mxstate[[16,"meaninactivedays"]] <- mean(Michoaca$days_inactivity, na.rm = T)
+df_mxstate[[21,"meaninactivedays"]] <- mean(Puebla$days_inactivity, na.rm = T)
+df_mxstate[[22,"meaninactivedays"]] <- mean(Queretar$days_inactivity, na.rm = T)
+df_mxstate[[24,"meaninactivedays"]] <- mean(San_Luis$days_inactivity, na.rm = T)
+df_mxstate[[30,"meaninactivedays"]] <- mean(Veracruz$days_inactivity, na.rm = T)
+
+df_mxstate$value <- df_mxstate$meaninactivedays
+mxstate_choropleth(df_mxstate,
+                   num_colors = 1,
+                   title = "Average Inactive Days (Entire Country)")
+df_mxstate$value <- df_mxstate$meaninactivedays
+mxstate_choropleth(df_mxstate,
+                   zoom = subset(df_mxstate, state_name %in% c("Guerrero", "Hidalgo", "Michoacán", "Puebla", "Querétaro", "San Luis Potosí", "Veracruz"))$region,
+                   num_colors = 7,
+                   title = "Average Inactive Days (Only the States in the Project)")
+```
+
+## Impact of cash-transfer program subject to different States
+
+```{r}
+df_mxstate$coefficient <- rep(NA)
+df_mxstate[[12,"coefficient"]] <- 0
+df_mxstate[[13,"coefficient"]] <- 46.102
+df_mxstate[[16,"coefficient"]] <- 83.304
+df_mxstate[[21,"coefficient"]] <- 24.126
+df_mxstate[[22,"coefficient"]] <- 40.39
+df_mxstate[[24,"coefficient"]] <- -0.503
+df_mxstate[[30,"coefficient"]] <- 7.905
+
+df_mxstate$value <- df_mxstate$coefficient
+
+mxstate_choropleth(df_mxstate,
+                   zoom = subset(df_mxstate, state_name %in% c("Guerrero", "Hidalgo", "Michoacán", "Puebla", "Querétaro", "San Luis Potosí", "Veracruz"))$region,
+                   num_colors = 9,
+                   title = "Impact on raising living standard subject to States")
+```
+```{r}
+investments<- read.dta13('investments_data.dta')
+```
